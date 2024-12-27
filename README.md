@@ -4,7 +4,7 @@ looks up the file's project folder, resolvs where the dependencies are and cache
 
 use `telescope` or `fzf-lua` to search through julia source files in these directories.
 
-
+setup:
 ```lua
 require("projectsearchjl").setup(
     {juliabin="/home/<user>/.juliaup/bin/julia",
