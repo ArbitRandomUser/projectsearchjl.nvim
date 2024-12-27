@@ -1,4 +1,4 @@
-A project to search through dependencies source of the current julia project in nvim 
+A plugin to search through dependencies source of the current julia project in nvim 
 
 looks up the file's project folder, resolvs where the dependencies are and caches them
 
