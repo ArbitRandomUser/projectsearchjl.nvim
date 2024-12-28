@@ -54,10 +54,32 @@ M.telescope_live_grep_jl = function (opts)
     }
     pickers.new(opts,{
             debounce = 100,
-            prompt_title = "julia project search",
+            prompt_title = "julia live grep",
             finder = finder,
             previewer =  conf.grep_previewer(opts),
             sorter = require("telescope.sorters").empty(),
+        }):find()
+end
+
+M.telescope_grep_jl = function (opts)
+    opts = opts or {}
+    local bufno = vim.api.nvim_get_current_buf()
+    local depfolders = vim.fn.split(buffers_cache[bufno]," ")
+    if not depfolders then
+        print("oops! caching not finished try again, either that or this isn't a *.jl")
+        return
+    end
+    local searchstring = vim.fn.input("search for?")
+    local commandopts = {"rg", "-e" , searchstring, "--glob=*.jl" ,"--color=never","--no-heading","--with-filename","--column","--smart-case"}
+    local command = vim.iter({commandopts,depfolders}):flatten():totable() 
+    opts.entry_maker = opts.entry_maker or make_entry.gen_from_vimgrep(opts)
+    local finder = finders.new_oneshot_job(command ,opts)
+    pickers.new(opts,{
+            debounce=100,
+            prompt_title = "julia grep",
+            finder = finder,
+            previewer = conf.grep_previewer(opts),
+            sorter = conf.generic_sorter(opts),
         }):find()
 end
 
