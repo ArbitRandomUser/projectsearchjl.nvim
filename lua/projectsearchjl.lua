@@ -9,8 +9,10 @@ local finders --= require"telescope.finders"
 local make_entry --= require"telescope.make_entry"
 local conf --= require"telescope.config".values
 local fzflua
-local Path = require"fzf-lua.path"
 local jlfzfopts = {}
+local actions = require"fzf-lua.actions"
+local config = require"fzf-lua.config"
+
 
 local scriptpath --path of this project finder script , computed in setup
 
@@ -26,8 +28,9 @@ local compute_projectfolders = function(bufno)
 end
 
 
-M.telescope_live_grep_jl = function (bufno)
-    local opts = {}
+M.telescope_live_grep_jl = function (opts)
+    local bufno = vim.api.nvim_get_current_buf()
+    local opts = opts or {}
     local finder =finders.new_async_job{
         command_generator = function(prompt)
             if not prompt or prompt=="" then
@@ -55,10 +58,36 @@ M.telescope_live_grep_jl = function (bufno)
 end
 
 
-M.fzflua_live_grep_jl = function (bufno)
+M.fzflua_live_grep_jl = function(opts)
+    local opts = config.normalize_opts(opts,"grep") 
+    local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
+    if not depfolders then
+        print("oops,too quick try again")
+        return
+    end
+    opts.prompt = "julia live grep>"
+    opts.actions = {["ctrl-g"] = function (_,opts)
+        M.fzflua_grep_jl(opts.last_query)
+    end}
     fzflua.fzf_live("rg --glob=*.jl --regexp=<query> --column --line-number --no-heading --color=always --smart-case "..depfolders,
-        jlfzfopts
+        opts
+    )
+end
+
+
+M.fzflua_grep_jl = function (grepstring)
+    local opts = config.normalize_opts(opts,"grep") 
+    local bufno = vim.api.nvim_get_current_buf()
+    local depfolders = buffers_cache[bufno] 
+    opts.prompt = "julia grep>"
+    opts.actions ={["ctrl-g"] = function(_,opts) 
+    end}
+    if not grepstring then
+        grepstring = vim.fn.input("search for?")
+    end
+    fzflua.fzf_exec("rg --glob=*.jl --regexp="..grepstring.." --column --line-number --no-heading --color=always --smart-case "..depfolders,
+        opts
     )
 end
 
@@ -102,5 +131,6 @@ M.setup = function(opts)
         }
     )
 end
+
 
 return M
