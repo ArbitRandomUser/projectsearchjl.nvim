@@ -10,8 +10,8 @@ local make_entry --= require"telescope.make_entry"
 local conf --= require"telescope.config".values
 local fzflua
 local jlfzfopts = {}
-local actions = require"fzf-lua.actions"
-local config = require"fzf-lua.config"
+local fzfactions 
+local fzfconfig  
 
 
 local scriptpath --path of this project finder script , computed in setup
@@ -29,8 +29,13 @@ end
 
 
 M.telescope_live_grep_jl = function (opts)
+    opts = opts or {}
     local bufno = vim.api.nvim_get_current_buf()
-    local opts = opts or {}
+    local depfolders = vim.fn.split(buffers_cache[bufno]," ")
+    if not depfolders then
+        print("oops! caching not finished try again, either that or this isn't a *.jl")
+        return
+    end
     local finder =finders.new_async_job{
         command_generator = function(prompt)
             if not prompt or prompt=="" then
@@ -42,7 +47,6 @@ M.telescope_live_grep_jl = function (opts)
             table.insert(args, "-g")
             table.insert(args,"*.jl")
             local command =  vim.iter({args,{"--color=never","--no-heading","--with-filename","--line-number","--column","--smart-case"}}):flatten():totable()
-            local depfolders = vim.fn.split(buffers_cache[bufno]," ")
             command = vim.iter({command,depfolders}):flatten():totable()
             return command
         end,
@@ -57,9 +61,8 @@ M.telescope_live_grep_jl = function (opts)
         }):find()
 end
 
-
 M.fzflua_live_grep_jl = function(opts)
-    local opts = config.normalize_opts(opts,"grep") 
+    local opts = fzfconfig.normalize_opts(opts,"grep") 
     local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
     if not depfolders then
@@ -77,7 +80,7 @@ end
 
 
 M.fzflua_grep_jl = function (grepstring)
-    local opts = config.normalize_opts(opts,"grep") 
+    local opts = fzfconfig.normalize_opts(opts,"grep") 
     local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
     opts.prompt = "julia grep>"
@@ -114,6 +117,8 @@ M.setup = function(opts)
         previewer = "builtin",
     }
     if opts.picker == "fzf-lua" or opts.picker == "fzflua" then
+        fzfactions = require"fzf-lua.actions"
+        fzfconfig  = require"fzf-lua.config"
         fzflua = require"fzf-lua"
         jlfzfopts.fn_transform = function (x)
             return fzflua.make_entry.file(x,jlfzfopts)
