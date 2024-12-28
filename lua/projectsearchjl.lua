@@ -63,7 +63,7 @@ M.fzflua_live_grep_jl = function(opts)
     local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
     if not depfolders then
-        print("oops,too quick try again")
+        print("oops! caching not finished try again, either that or this isn't a *.jl")
         return
     end
     opts.prompt = "julia live grep>"
