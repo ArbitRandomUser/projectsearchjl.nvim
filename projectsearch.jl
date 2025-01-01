@@ -14,6 +14,14 @@ end
 
 stdlib_path(stdlib::String) = joinpath(stdlib_dir(), stdlib)
 
+function get_project_folder(filepath)
+    dir = dirname(filepath)
+    while !isfile(joinpath(dir, "Project.toml")) && dir != "/"
+        dir = dirname(dir)
+    end
+    return dir
+end
+
 """
     traverse up the files path,first folder with Project.toml is assumed to be project folder
     get all Project.toml entries in the format
@@ -22,10 +30,7 @@ stdlib_path(stdlib::String) = joinpath(stdlib_dir(), stdlib)
 """
 function get_project_of_file(filepath)
     #isfile(filepath) || return Dict("deps"=>Dict())
-    dir = dirname(filepath)
-    while !isfile(joinpath(dir, "Project.toml")) && dir != "/"
-        dir = dirname(dir)
-    end
+    dir = get_project_folder(filepath)
     fname = joinpath(dir, "Project.toml")
     isfile(fname) || return Dict("deps" => Dict())
     ret = Base.parsed_toml(fname)
@@ -37,12 +42,9 @@ end
 """
 function get_manifest_of_file(filepath)
     #isfile(filepath) || return Dict("deps"=>Dict())
-    dir = dirname(filepath)
-    while !isfile(joinpath(dir, "Project.toml")) && dir != "/"
-        dir = dirname(dir)
-    end
+    dir = get_project_folder(filepath)
     fname = joinpath(dir, "Manifest.toml")
-    isfile(fname) || return Dict("deps" => Dict())
+    isfile(fname) || throw("no Manifest found, is project instantiated?") 
     ret = Base.parsed_toml(fname)
     return ret
 end
