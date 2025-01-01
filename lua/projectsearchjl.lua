@@ -12,6 +12,7 @@ local fzflua
 local jlfzfopts = {}
 local fzfactions 
 local fzfconfig  
+local fzfcore
 
 
 local scriptpath --path of this project finder script , computed in setup
@@ -83,7 +84,7 @@ M.telescope_grep_jl = function (opts)
         }):find()
 end
 
-M.fzflua_live_grep_jl = function(opts)
+M.fzflua_live_grep_jl = function(query)
     local opts = fzfconfig.normalize_opts(opts,"grep") 
     local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
@@ -91,13 +92,36 @@ M.fzflua_live_grep_jl = function(opts)
         print("oops! caching not finished try again, either that or this isn't a *.jl")
         return
     end
+    query = query or ""
+    opts.query = query
     opts.prompt = "julia live grep>"
     opts.actions = {["ctrl-g"] = function (_,opts)
         M.fzflua_grep_jl(opts.last_query)
     end}
-    fzflua.fzf_live("rg --glob=*.jl --regexp=<query> --column --line-number --no-heading --color=always --smart-case "..depfolders,
+    M.fzf_live("rg --glob=*.jl --regexp=<query> --column --line-number --no-heading --color=always --smart-case "..depfolders,
         opts
     )
+end
+
+
+M.fzf_live = function(contents, opts)
+  assert(contents)
+  opts = fzfconfig.normalize_opts(opts, "grep")
+  opts = opts or {}
+  opts.fn_reload = contents
+  search_query = search_query or ""
+  if #search_query > 0 and not (no_esc or opts.no_esc) then
+    -- For UI consistency, replace the saved search query with the regex
+    opts.no_esc = true
+    opts.search = utils.rg_escape(search_query)
+    search_query = opts.search
+  end
+  opts.actions ={["alt-g"] = function(_,opts) 
+      M.fzflua_grep_jl(opts.last_query)
+  end}
+  opts = fzfcore.set_header(opts, opts.headers or { "actions", "cwd" })
+  opts = fzfcore.set_fzf_field_index(opts)
+  return fzfcore.fzf_exec(nil, opts)
 end
 
 
@@ -106,8 +130,10 @@ M.fzflua_grep_jl = function (grepstring)
     local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
     opts.prompt = "julia grep>"
-    opts.actions ={["ctrl-g"] = function(_,opts) 
+    opts.actions ={["alt-g"] = function(_,opts) 
+        M.fzflua_grep_jl(opts.last_query)
     end}
+    opts.actions = {["ctrl-g"] = function () end}
     if not grepstring then
         grepstring = vim.fn.input("search for?")
     end
@@ -134,18 +160,11 @@ M.setup = function(opts)
         conf = require"telescope.config".values
     end
     --fzflua setup
-    jlfzfopts = {
-        path_shorten = 3,
-        previewer = "builtin",
-    }
     if opts.picker == "fzf-lua" or opts.picker == "fzflua" then
         fzfactions = require"fzf-lua.actions"
         fzfconfig  = require"fzf-lua.config"
         fzflua = require"fzf-lua"
-        jlfzfopts.fn_transform = function (x)
-            return fzflua.make_entry.file(x,jlfzfopts)
-        end
-        jlfzfopts.prompt="julia project search>"
+        fzfcore = require"fzf-lua.core"
     end
 
     --autocmd to resolve source folders
