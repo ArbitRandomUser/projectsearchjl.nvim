@@ -22,17 +22,41 @@ require("projectsearchjl").setup(
     picker = "fzflua"} -- or "telescope" whichever you use
     )
 
--- live grep bindings
-vim.keymap.set('n','<your keybind here',require"projectsearchjl".fzflua_live_grep_jl())
---or--
+-- with telescope 
+vim.keymap.set('n','<your keybind here>',require"projectsearchjl".telescope_grep_jl()) 
 vim.keymap.set('n','<your keybind here>',require"projectsearchjl".telescope_live_grep_jl())
 
 
--- grep bindings
-
+-- fzf-lua bindings
+vim.keymap.set('n','<your keybind here',require"projectsearchjl".fzflua_live_grep_jl())
 vim.keymap.set('n','<your keybind here>',require"projectsearchjl".fzflua_grep_jl())
--- 
-vim.keymap.set('n','<your keybind here>',require"projectsearchjl".telescope_grep_jl()) 
+
+-- i also like to pass the visual selection to fzflua 
+
+vim.keymap.set('v', '<your keybind here>', function ()
+    query = getVisualSelection()
+    require "projectsearchjl".fzflua_grep_jl(query)
+end)
+
+vim.keymap.set('v', '<leader>jl', function ()
+    query = getVisualSelection()
+    require "projectsearchjl".fzflua_live_grep_jl(query)
+end)
+
+--where VisualSelection is defined as.
+-- get selection for visual selection 
+function getVisualSelection()
+    vim.cmd('noau normal! "vy"')
+    local text = vim.fn.getreg('v')
+    vim.fn.setreg('v', {})
+    text = string.gsub(text, "\n", "")
+    if #text > 0 then
+        return text
+    else
+        return ''
+    end
+end
+
 -- 
 ```
 <b>grep</b>: prompts you for a string first `search for?` in the nvim command line. That string is then searched for in the project source folders using `rg` and triggers telescope/fzf floating window. Furthur filtering can be done by typing floating window.
