@@ -61,4 +61,4 @@ end
 ```
 <b>grep</b>: prompts you for a string first `search for?` in the nvim command line. That string is then searched for in the project source folders using `rg` and triggers telescope/fzf floating window. Furthur filtering can be done by typing floating window.
 
-<b>live_grep</b>: Pops up telescope/fzflua first, as you start typing neovim will search for the typed string using `rg` in the source folders that the project resolves to. You can switch to grep-mode and filter furthur by `ctrl-g` (only if using fzflua) . 
+<b>live_grep</b>: Pops up telescope/fzflua first, as you start typing neovim will search for the typed string using `rg` in the source folders that the project resolves to. You can switch to grep-mode and filter furthur by `alt-g` (only if using fzflua) . 
