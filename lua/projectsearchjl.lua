@@ -95,9 +95,9 @@ M.fzflua_live_grep_jl = function(query)
     query = query or ""
     opts.query = query
     opts.prompt = "julia live grep>"
-    opts.actions = {["ctrl-g"] = function (_,opts)
-        M.fzflua_grep_jl(opts.last_query)
-    end}
+    --opts.actions = {["ctrl-g"] = function (_,opts)
+    --    M.fzflua_grep_jl(opts.last_query)
+    --end}
     M.fzf_live("rg --glob=*.jl --regexp=<query> --column --line-number --no-heading --color=always --smart-case "..depfolders,
         opts
     )
@@ -116,9 +116,10 @@ M.fzf_live = function(contents, opts)
     opts.search = utils.rg_escape(search_query)
     search_query = opts.search
   end
-  opts.actions ={["alt-g"] = function(_,opts) 
+  opts.actions["alt-g"] = function(_,opts) 
       M.fzflua_grep_jl(opts.last_query)
-  end}
+  end
+  opts.actions["ctrl-g"] = function () end
   opts = fzfcore.set_header(opts, opts.headers or { "actions", "cwd" })
   opts = fzfcore.set_fzf_field_index(opts)
   return fzfcore.fzf_exec(nil, opts)
@@ -130,10 +131,10 @@ M.fzflua_grep_jl = function (grepstring)
     local bufno = vim.api.nvim_get_current_buf()
     local depfolders = buffers_cache[bufno] 
     opts.prompt = "julia grep>"
-    opts.actions ={["alt-g"] = function(_,opts) 
+    opts.actions["alt-g"] = function(_,opts) 
         M.fzflua_grep_jl(opts.last_query)
-    end}
-    opts.actions = {["ctrl-g"] = function () end}
+    end
+    opts.actions["ctrl-g"] = function () end
     if not grepstring then
         grepstring = vim.fn.input("search for?")
     end
